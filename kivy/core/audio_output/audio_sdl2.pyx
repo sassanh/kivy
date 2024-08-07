@@ -353,6 +353,22 @@ class MusicSDL2(Sound):
         else:
             Mix_VolumeMusic(int(self.volume * 128))
 
+    @classmethod
+    def from_bytes(cls, data):
+        instance = SoundSDL2()
+        cdef ChunkContainer cc = instance.cc
+
+        rw = SDL_RWFromMem(data, len(data))
+        cc.chunk = Mix_LoadWAV_RW(rw, 0)
+
+        if cc.chunk == NULL:
+            Logger.warning('AudioSDL2: Unable to load data: {}'.format(Mix_GetError()))
+        else:
+            cc.original_chunk = Mix_QuickLoad_RAW(cc.chunk.abuf, cc.chunk.alen)
+            cc.chunk.volume = int(instance.volume * 128)
+
+        return instance
+
     def unload(self):
         cdef MusicContainer mc = self.mc
         self.stop()
